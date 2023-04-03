@@ -20,8 +20,12 @@ const remindSchema = new mongoose.Schema({
     },
     hari_masuk: {
         type: Array
+    },
+    jam_masuk: {
+        type: Array
     }
 })
 
 const Remind = mongoose.model('Remind', remindSchema);
 module.exports = Remind;
+
