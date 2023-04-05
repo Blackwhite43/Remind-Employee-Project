@@ -85,6 +85,12 @@ exports.delete_expired_data = catchAsync(async (req, res) => {
         status: 'Success'
     })
 })
+exports.delete_all = catchAsync(async (req, res) => {
+    await Remind.deleteMany();
+    res.send(200).json({
+        status: 'Success'
+    })
+})
 exports.insert_data = catchAsync(async (req, res) => {
     const ws = await req.body.ws;
     var arrayFiltered = [];

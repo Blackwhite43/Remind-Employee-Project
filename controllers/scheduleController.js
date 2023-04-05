@@ -2,9 +2,7 @@ const schedule = require("node-schedule");
 const Remind = require("../remindModel");
 const catchAsync = require("../utils/catchAsync");
 const moment = require('moment');
-let now = moment();
-let today = new Date();
-today = moment.weekdays(today);
+const axios = require("axios");
 
 const get_hari = function (hari) {
     if (hari == "Monday") {
@@ -30,32 +28,115 @@ const get_hari = function (hari) {
     }
 }
 
-exports.send_reminder = catchAsync(async function (req, res) {
-    const data = await Remind.find({
-        to: {$gte: now},
-        from: {$lte: now}
-    });
-    // const no_telp = await Remind.find({}, {
-    //     nama: 1, no_Telp: 1
-    // })
-    // console.log(no_telp);
-    data.map(index => {
-        if (index['hari_masuk'][get_hari(today)] == 1) {
-            const split_jam = index['jam_masuk'][get_hari(today)].split(/\ - |\./);
-            let temp_jam = split_jam[0];
-            let temp_menit = split_jam[1]-20;
-            if (temp_menit < 0) {
-                temp_menit = temp_menit + 60;
-                temp_jam--;
+const hari_ini = function (hari) {
+    if (hari == "Monday") {
+        return "Senin";
+    }
+    else if (hari == "Tuesday") {
+        return "Selasa";
+    }
+    else if (hari == "Wednesday") {
+        return "Rabu";
+    }
+    else if (hari == "Thursday") {
+        return "Kamis";
+    }
+    else if (hari == "Friday") {
+        return "Jumat";
+    }
+    else if (hari == "Saturday") {
+        return "Sabtu";
+    }
+    else {
+        return -1;
+    }
+}
+schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req, res) {
+    let now = new Date();
+    let today = new Date(); // pakai moment hari jumping
+    today = moment.weekdays(today);
+    const data = await Remind.aggregate([
+        {
+            '$addFields': {
+                'currentDay': {
+                    '$arrayElemAt': ['$hari_masuk', get_hari(today)]
+                }, 
+                'currentJamMasuk': {
+                    '$arrayElemAt': ['$jam_masuk', get_hari(today)]
+                }
             }
-            schedule.scheduleJob(`${temp_menit} ${temp_jam} * * ${get_hari(today)+1}`, function () {
-                console.log(`Halo, ${index['nama']} di Hari ${today} anda masuk jam ${split_jam[0]}.${split_jam[1]} sampai ${split_jam[2]}.${split_jam[3]}`);
-                console.log("Jangan lupa buat absen ya")
-            })
-            //console.log(`Remind saat jam: ${temp_jam}.${temp_menit}`);
+        },
+        {
+            '$match': {
+                'currentDay': 1,
+                'to': {$gte: now},
+                'from': {$lte: now}
+            }
+        },
+        {
+            '$group': {
+                '_id': '$currentJamMasuk',
+                'data': {
+                    '$push': '$$ROOT'
+                }
+            }
+        },
+        {
+            '$sort': {
+                '_id': 1
+            }
         }
+    ])
+    let i = 0;
+    data.map(index => {
+        //console.log(index['data']);
+        const split_jam_masuk = index['_id'].split(/\ - /);
+        let time_masuk = moment(`${split_jam_masuk[0]}`,"HH:mm");
+        let time_pulang = moment(`${split_jam_masuk[1]}`,"HH:mm");
+        time_masuk = moment(time_masuk).subtract(15, "minute");
+        //time_pulang = moment(time_pulang).subtract(5, "minute");
+        index['data'].map(idx => {
+            let menit_masuk = time_masuk.minutes();
+            let jam_masuk = time_masuk.hours();
+            let detik_masuk = time_masuk.seconds();
+            schedule.scheduleJob(`${detik_masuk} ${menit_masuk} ${jam_masuk} * * ${get_hari(today)+1}`, function () {
+                axios.post('https://api.watzap.id/v1/send_message', {
+                    "api_key": "WJKSGUXNHQVI5K8E",
+                    "number_key": "TnCXgkjx6MLWXVzx",
+                    "phone_no": `${idx['no_Telp']}`,
+                    "message": `CLOCK IN-ABSENSI PUKUL ${split_jam_masuk[0]} HARI ${hari_ini(today).toUpperCase()}\n`+
+                    `Halo ${idx['nama']}, mohon pastikan anda telah melakukan Absensi Pulang/Clock Out hari ini pada mobile attendance.\n\n`+
+                    `Terimakasih\n`+
+                    `(Layanan Pesan Otomatis)`
+                })
+                .then(ret => {console.log(ret.data)})
+                .catch(err => console.error(err))
+            })
+            time_masuk = moment(time_masuk).add(3, "seconds");
+
+            let menit_pulang = time_pulang.minutes();
+            let jam_pulang = time_pulang.hours();
+            let detik_pulang = time_pulang.seconds();
+            // console.log(time_pulang);
+            // console.log(i);
+            // i++;
+            schedule.scheduleJob(`${detik_pulang} ${menit_pulang} ${jam_pulang} * * ${get_hari(today)+1}`, function () {
+                axios.post('https://api.watzap.id/v1/send_message', {
+                    "api_key": "WJKSGUXNHQVI5K8E",
+                    "number_key": "TnCXgkjx6MLWXVzx",
+                    "phone_no": `${idx['no_Telp']}`,
+                    "message": `CLOCK OUT-ABSENSI PUKUL ${split_jam_masuk[1]} HARI ${hari_ini(today).toUpperCase()}\n`+
+                    `Halo ${idx['nama']}, mohon pastikan anda telah melakukan Absensi Pulang/Clock Out hari ini pada mobile attendance.\n\n`+
+                    `Terimakasih\n`+
+                    `(Layanan Pesan Otomatis)`
+                })
+                .then(ret => {console.log(ret.data)})
+                .catch(err => console.error(err))
+            })
+            time_pulang = moment(time_pulang).add(3, "seconds");
+        })
     })
     res.status(200).json({
-        status: 'success'
+        status: 'Success'
     })
-})
+}))
