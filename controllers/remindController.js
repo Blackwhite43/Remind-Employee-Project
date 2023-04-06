@@ -1,8 +1,7 @@
 const moment = require("moment");
 const Remind = require("../remindModel");
 const catchAsync = require("../utils/catchAsync");
-let now = moment();
-// let temp_from, temp_to;
+
 const set_zero_hari = function (set_hari) {
     for (let i=0;i<=5;i++) {
         set_hari[i] = 0;
@@ -62,13 +61,13 @@ const hari_jam = function (string, set_hari, set_jam, temp) {
                     }
                 }
             }
-            else {
+            else { // kemungkinan akan ada jam yang salah disini
                 if (set_hari[temp] == 1) {
                     set_jam[temp] = index;
                 }
                 else {
                     for (i=0;i<=5;i++) {
-                        if (set_hari[i] == 1) {
+                        if (set_hari[i] == 1) { // tambahkan if i != temp jika ada kesalahan jadwal
                             set_jam[i] = index;
                         }
                     }
@@ -78,6 +77,7 @@ const hari_jam = function (string, set_hari, set_jam, temp) {
     })
 }
 exports.delete_expired_data = catchAsync(async (req, res) => {
+    let now = moment(); // ganti ke new Date() jika momemnt() jumping
     await Remind.deleteMany({
         to: {$lt: now}
     });
@@ -94,12 +94,12 @@ exports.delete_all = catchAsync(async (req, res) => {
 exports.insert_data = catchAsync(async (req, res) => {
     const ws = await req.body.ws;
     var arrayFiltered = [];
-    for (i=3;;i++) {
+    for (i=2;;i++) {
         let set_hari = [];
         let set_jam = [];
         set_zero_hari(set_hari);
         set_none_jam(set_jam);
-        if (ws[`A${i}`] == undefined || ws[`A${i}`] == '') {
+        if (ws[`B${i}`] == undefined || ws[`B${i}`] == '') {
             break;
         }
         else {
@@ -111,14 +111,13 @@ exports.insert_data = catchAsync(async (req, res) => {
             const G = ws[`G${i}`]['w'];
             let H = ws[`H${i}`] == undefined ? '' : ws[`H${i}`]['w'];
             let I = ws[`I${i}`] == undefined ? '' : ws[`I${i}`]['w'];
-            let J = ws[`J${i}`] == undefined ? '' : ws[`J${i}`]['w'];
+            let K = ws[`K${i}`] == undefined ? '' : ws[`K${i}`]['w'];
             H = H.toLowerCase();
             I = I.toLowerCase();
-            J = J.toLowerCase();
+            K = K.toLowerCase();
             hari_jam(H, set_hari, set_jam, 4);
             hari_jam(I, set_hari, set_jam, 4);
-            hari_jam(J, set_hari, set_jam, 5);
-            //const K = ws[`K${i}`] == undefined ? '' : ws[`K${i}`]['w'];
+            hari_jam(K, set_hari, set_jam, 5);
             arrayFiltered.push({
                 nik: B,
                 nama: C,
@@ -131,7 +130,7 @@ exports.insert_data = catchAsync(async (req, res) => {
             })
         }
     }
-    //console.log(arrayFiltered);
+    // console.log(arrayFiltered);
     const newData = await Remind.insertMany(arrayFiltered);
     res.status(201).json({
         status: 'success',

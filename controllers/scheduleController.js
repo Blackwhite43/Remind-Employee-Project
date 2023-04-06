@@ -51,7 +51,7 @@ const hari_ini = function (hari) {
         return -1;
     }
 }
-schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req, res) {
+/*schedule.scheduleJob(`0 0 * * *`, */exports.send_reminder = catchAsync(async function (req, res) { // uncomment schedule jika ingin send_reminder auto berjalan tiap jam 00.00
     let now = new Date();
     let today = new Date(); // pakai moment hari jumping
     today = moment.weekdays(today);
@@ -87,18 +87,18 @@ schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req
             }
         }
     ])
-    let i = 0;
     data.map(index => {
-        //console.log(index['data']);
         const split_jam_masuk = index['_id'].split(/\ - /);
-        let time_masuk = moment(`${split_jam_masuk[0]}`,"HH:mm");
-        let time_pulang = moment(`${split_jam_masuk[1]}`,"HH:mm");
+        let time_masuk = moment(`${split_jam_masuk[0]}`,"HH:mm"); // Input time masuk
+        let time_pulang = moment(`${split_jam_masuk[1]}`,"HH:mm"); // Input time pulang
         time_masuk = moment(time_masuk).subtract(15, "minute");
-        //time_pulang = moment(time_pulang).subtract(5, "minute");
+        // time_pulang = moment(time_pulang).subtract(5, "minute");
         index['data'].map(idx => {
+            time_masuk = moment(time_masuk).add(3, "seconds");
             let menit_masuk = time_masuk.minutes();
             let jam_masuk = time_masuk.hours();
             let detik_masuk = time_masuk.seconds();
+            console.log(`${jam_masuk}:${menit_masuk}:${detik_masuk}`);
             schedule.scheduleJob(`${detik_masuk} ${menit_masuk} ${jam_masuk} * * ${get_hari(today)+1}`, function () {
                 axios.post('https://api.watzap.id/v1/send_message', {
                     "api_key": "WJKSGUXNHQVI5K8E",
@@ -112,14 +112,11 @@ schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req
                 .then(ret => {console.log(ret.data)})
                 .catch(err => console.error(err))
             })
-            time_masuk = moment(time_masuk).add(3, "seconds");
-
+            
+            time_pulang = moment(time_pulang).add(3, "seconds");
             let menit_pulang = time_pulang.minutes();
             let jam_pulang = time_pulang.hours();
             let detik_pulang = time_pulang.seconds();
-            // console.log(time_pulang);
-            // console.log(i);
-            // i++;
             schedule.scheduleJob(`${detik_pulang} ${menit_pulang} ${jam_pulang} * * ${get_hari(today)+1}`, function () {
                 axios.post('https://api.watzap.id/v1/send_message', {
                     "api_key": "WJKSGUXNHQVI5K8E",
@@ -133,10 +130,9 @@ schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req
                 .then(ret => {console.log(ret.data)})
                 .catch(err => console.error(err))
             })
-            time_pulang = moment(time_pulang).add(3, "seconds");
         })
     })
     res.status(200).json({
         status: 'Success'
     })
-}))
+})//)
