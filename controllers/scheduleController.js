@@ -51,7 +51,7 @@ const hari_ini = function (hari) {
         return -1;
     }
 }
-/*schedule.scheduleJob(`0 0 * * *`, */exports.send_reminder = catchAsync(async function (req, res) { // uncomment schedule jika ingin send_reminder auto berjalan tiap jam 00.00
+schedule.scheduleJob(`0 0 * * *`, send_reminder = catchAsync(async function (req, res) { // uncomment schedule jika ingin send_reminder auto berjalan tiap jam 00.00
     let now = new Date();
     let today = new Date(); // pakai moment hari jumping
     today = moment.weekdays(today);
@@ -92,13 +92,12 @@ const hari_ini = function (hari) {
         let time_masuk = moment(`${split_jam_masuk[0]}`,"HH:mm"); // Input time masuk
         let time_pulang = moment(`${split_jam_masuk[1]}`,"HH:mm"); // Input time pulang
         time_masuk = moment(time_masuk).subtract(15, "minute");
-        // time_pulang = moment(time_pulang).subtract(5, "minute");
+        //time_pulang = moment(time_pulang).subtract(3, "minute");
         index['data'].map(idx => {
             time_masuk = moment(time_masuk).add(3, "seconds");
             let menit_masuk = time_masuk.minutes();
             let jam_masuk = time_masuk.hours();
             let detik_masuk = time_masuk.seconds();
-            console.log(`${jam_masuk}:${menit_masuk}:${detik_masuk}`);
             schedule.scheduleJob(`${detik_masuk} ${menit_masuk} ${jam_masuk} * * ${get_hari(today)+1}`, function () {
                 axios.post('https://api.watzap.id/v1/send_message', {
                     "api_key": "WJKSGUXNHQVI5K8E",
@@ -135,4 +134,4 @@ const hari_ini = function (hari) {
     res.status(200).json({
         status: 'Success'
     })
-})//)
+}))
