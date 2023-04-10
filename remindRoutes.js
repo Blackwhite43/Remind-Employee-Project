@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.route('/')
     .post(remindController.insert_data)
-    .get(scheduleController.send_reminder) // hapus bagian ini jika schedule diuncomment
+    //.get(scheduleController.send_reminder) // hapus bagian ini jika schedule diuncomment
 router.route('/expired')
     .delete(remindController.delete_expired_data)
 router.route('/all')
