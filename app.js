@@ -14,7 +14,8 @@ const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
 
 // -------- REQUIRE ROUTES MODULES -------- //
-const remindRoutes = require('./remindRoutes');
+const remindRoutes = require('./routes/remindRoutes');
+const dataRoutes = require('./routes/dataRoutes');
 
 // ----------------- DEFINE EXPRESS AS APP ----------------------- //
 const app = express();
@@ -81,6 +82,7 @@ app.use((req, res, next) => {
 // -------------- ROUTES -------------------- //
 // API Routes is divide it to routes folder
 app.use('/api/v1/remind', remindRoutes);
+app.use('/api/v1/data', dataRoutes);
 
 
 // HANDLE UNHANDLE ROUTE makesure this route on bot of others route
