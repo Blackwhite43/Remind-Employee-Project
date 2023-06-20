@@ -146,6 +146,7 @@ exports.get_data = catchAsync(async (req, res) => {
     });
     res.status(201).json({
         status: "Success",
+        total: data.length,
         data: data
     })
 })
