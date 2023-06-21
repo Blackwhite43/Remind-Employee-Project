@@ -3,7 +3,7 @@ const Remind = require("../model/remindModel");
 const catchAsync = require("../utils/catchAsync");
 const moment = require('moment');
 const axios = require("axios");
-schedule.scheduleJob(`1 0 * * *`, send_reminder = catchAsync(async (req, res) => {
+schedule.scheduleJob(`1 1 * * *`, send_reminder = catchAsync(async (req, res) => {
     let today_start = new Date();
     let today_end = new Date();
     today_start.setHours(0, 0, 0, 0);

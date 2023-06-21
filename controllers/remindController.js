@@ -60,12 +60,8 @@ schedule.scheduleJob(`1 0 * * *`, insert_data = catchAsync(async (req, res) => {
             })
         }
     })
-    const data = await Remind.create(data_shift);
-    res.status(201).json({
-        status: 'Success',
-        total: data_shift.length,
-        data: data
-    })
+    await Remind.create(data_shift);
+    console.log("Data Retrieved!");
 }))
 
 exports.insert_data = catchAsync(async (req, res) => {
