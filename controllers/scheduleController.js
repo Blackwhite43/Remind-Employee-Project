@@ -4,6 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const moment = require('moment');
 const axios = require("axios");
 schedule.scheduleJob(`1 1 * * *`, send_reminder = catchAsync(async (req, res) => {
+    console.log("RUN!");
     let today_start = new Date();
     let today_end = new Date();
     today_start.setHours(0, 0, 0, 0);
